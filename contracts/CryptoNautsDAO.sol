@@ -27,7 +27,7 @@ interface ICryptoNautsNFT {
     ) external view returns (uint256);
 }
 
-contract CryptoDevsDAO is Ownable {
+contract CryptoNautsDAO is Ownable {
     struct Proposal {
         uint256 nftTokenId;
         uint256 deadline;
@@ -42,13 +42,22 @@ contract CryptoDevsDAO is Ownable {
         NAY
     }
 
+    mapping(uint256 => Proposal) public proposals;
+    uint256 public numProposals;
+
+    IMockNFTMarketplace nftMarketplace;
+    ICryptoNautsNFT cryptoNautsNFT;
+
     modifier nftHolderOnly() {
         require(cryptoNautsNFT.balanceOf(msg.sender) > 0, "NOT A MEMBER");
         _;
     }
 
-    modifier activeProposalOnly(uint256 indx) {
-        require(proposals[indx].deadline > block.timestamp, "VOTE_ENDED");
+    modifier activeProposalOnly(uint256 proposalIndex) {
+        require(
+            proposals[proposalIndex].deadline > block.timestamp,
+            "DEADLINE_EXCEEDED"
+        );
         _;
     }
 
@@ -64,13 +73,10 @@ contract CryptoDevsDAO is Ownable {
         _;
     }
 
-    mapping(uint256 => address) public proposals;
-    uint256 public numProposals;
-
-    IMockNFTMarketplace nftMarketplace;
-    ICryptoNautsNFT cryptoNautsNFT;
-
-    constructor(address _nftMarketplace, address _cryptoNautsNFT) payable {
+    constructor(
+        address _nftMarketplace,
+        address _cryptoNautsNFT
+    ) payable Ownable(msg.sender) {
         nftMarketplace = IMockNFTMarketplace(_nftMarketplace);
         cryptoNautsNFT = ICryptoNautsNFT(_cryptoNautsNFT);
     }
